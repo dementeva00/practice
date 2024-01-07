@@ -26,13 +26,13 @@ public class Main {
         //createSQLite();
 
         // Задание 1
-        buildAGraph();
+        //buildAGraph();
 
         // Задание 2
-        //printAverageGrantSize();
+        printTheFiveHighest();
 
         // Задание 3
-        //printBusinessType();
+        printTeam();
     }
 
     // Достаем данные из csv файла
@@ -206,7 +206,6 @@ public class Main {
             // Запрос к базе данных
             ResultSet resultSet = statement.executeQuery(strRequest);
             while(resultSet.next()){
-                assert false;
                 result.append(resultSet.getString(columnName)).append(" ");
             }
         } catch (SQLException e) {
@@ -223,44 +222,69 @@ public class Main {
         return result.toString();
     }
 
-    // Задача 2
-//    public static void printAverageGrantSize() {
-//        // Строка запроса к базе данных
-//        String strRequest =  "SELECT AVG(grantSize) " +
-//                "AS averageGrantSize FROM GrantSize " +
-//                "INNER JOIN BusinessTypeAndYear " +
-//                "ON GrantSize.id_grant_size = BusinessTypeAndYear.id_grant_size " +
-//                "WHERE BusinessTypeAndYear.businessType = 'Salon/Barbershop';";
-//
-//        // Делаем запрос и получаем результат
-//        String result = connectionBD("averageGrantSize", strRequest);
-//
-//        // Выводим результат в консоль
-//        System.out.println("Задача 2");
-//        System.out.println("Средний размер гранта для Salon/Barbershop: " + result);
-//        System.out.println();
-//    }
-//
-//    // Задача 3
-//    public static void printBusinessType() {
-//        // Строка запроса к базе данных
-//        String strRequest = "SELECT businessType " +
-//                "AS oneBusinessType FROM BusinessTypeAndYear " +
-//                "INNER JOIN MAINCompanyName " +
-//                "ON BusinessTypeAndYear.id_business = MAINCompanyName.id_business " +
-//                "INNER JOIN GrantSize " +
-//                "ON BusinessTypeAndYear.id_grant_size = GrantSize.id_grant_size " +
-//                "WHERE GrantSize.grantSize < 55000.00 " +
-//                "GROUP BY BusinessTypeAndYear.businessType " +
-//                "ORDER BY MAINCompanyName.numberOfJobs DESC " +
-//                "LIMIT 1;";
-//
-//        // Делаем запрос и получаем результат
-//        String result = connectionBD("oneBusinessType", strRequest);
-//
-//        // Выводим результат в консоль
-//        System.out.println("Задача 3");
-//        System.out.println("Тип бизнеса, предоставивший наибольшее количество " +
-//                "рабочих мест, где размер гранта не превышает $55,000.00: " + result);
-//    }
+//     Задача 2
+    public static void printTheFiveHighest() {
+        // Строка запроса к базе данных
+        String strRequest =  "SELECT s.name, s.height " +
+                "FROM Sportsman s " +
+                "JOIN Team t ON s.id_team = t.id_team " +
+                "WHERE t.team = ( " +
+                "    SELECT team " +
+                "    FROM ( " +
+                "        SELECT t.team, AVG(s.height) AS avgheight " +
+                "        FROM Sportsman s " +
+                "        JOIN Team t ON s.id_team = t.id_team " +
+                "        GROUP BY t.team " +
+                "        ORDER BY avgheight DESC" +
+                "        LIMIT 1 " +
+                "    ) " +
+                ") " +
+                "ORDER BY s.height DESC " +
+                "LIMIT 5;";
+
+        // Делаем запрос и получаем результат
+        String result = connectionBD("name", strRequest);
+
+        // Преобразуем результат в красивый вид
+        String outputString = "";
+        String[] words = result.split(" ");
+        for (int i = 0; i < words.length; i++) {
+            if (i % 2 != 0) {
+                outputString += words[i] + ", ";
+            }
+            else {
+                outputString += words[i] + " ";
+            }
+        }
+
+        // Выводим результат в консоль
+        System.out.println("Задача 2");
+        System.out.println("Пять самых высоких игроков из команды с самым высоким средним ростом: " + outputString);
+        System.out.println();
+    }
+
+    // Задача 3
+    public static void printTeam() {
+        // Строка запроса к базе данных
+        String strRequest = "SELECT team " +
+                "FROM Sportsman " +
+                "JOIN Team ON sportsman.id_team = team.id_team " +
+                "WHERE team.id_team IN ( " +
+                "    SELECT id_team " +
+                "    FROM Sportsman " +
+                "    GROUP BY id_team " +
+                "    HAVING AVG(height) >= 74 AND AVG(height) <= 78 AND AVG(weight) >= 190 AND AVG(weight) <= 210 " +
+                ") " +
+                "GROUP BY team.team " +
+                "ORDER BY sportsman.age DESC " +
+                "LIMIT 1;";
+
+        // Делаем запрос и получаем результат
+        String result = connectionBD("team", strRequest);
+
+        // Выводим результат в консоль
+        System.out.println("Задача 3");
+        System.out.println("Команда, с средним ростом равным от 74 до 78 inches и " +
+                "средним весом от 190 до 210 lbs, с самым высоким средним возрастом: " + result);
+    }
 }
